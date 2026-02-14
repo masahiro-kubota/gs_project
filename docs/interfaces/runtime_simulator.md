@@ -1,6 +1,6 @@
 # ランタイムシミュレーション契約（world_bundle → ROS2）
 
-**バージョン**: 1.0.1
+**バージョン**: 1.0.2
 **最終更新**: 2026-02-15
 
 ## 概要
@@ -51,7 +51,8 @@ ros2 launch gs_ros2_simulator bringup.launch.xml world:=/path/to/world_bundle
 |-----------|------------|-------|-----|---------|
 | `/vehicle/control_cmd` | `ackermann_msgs/AckermannDriveStamped` | ~10-100Hz | Reliable | 必須 |
 
-**代替メッセージ型**（パラメータで切替可能）:
+**サポート対象メッセージ型**（パラメータで切替可能）:
+- `ackermann_msgs/AckermannDriveStamped`（デフォルト）
 - `geometry_msgs/TwistStamped`
 - `gs_sim_msgs/VehicleControlCmd`
 
@@ -67,8 +68,8 @@ ackermann_msgs/AckermannDrive drive
 ```
 
 **タイムアウト**:
-- 制御入力が 1.0秒 途絶えた場合、車両は緊急停止（減速度 3.0 m/s²）
-- パラメータ `control_timeout_sec` で変更可能
+- 制御入力が途絶えた場合、車両は緊急停止（減速度 3.0 m/s²）（MUST）
+- タイムアウト時間: デフォルト値 1.0秒（パラメータ `control_timeout_sec` で変更可能）（MUST）
 
 ---
 
@@ -123,11 +124,11 @@ vehicle:
 ```yaml
 simulation:
   # タイムステップ（world_bundle の timebase.yaml を上書き可能）
-  dt: 0.01                      # [s] シミュレーションステップ（100Hz）
+  dt: 0.01                      # [s] シミュレーションステップ（デフォルト値: 0.01 = 100Hz）
 
   # リアルタイム制御
-  real_time_factor: 1.0         # 実時間の何倍で動かすか（1.0=リアルタイム）
-  max_step_time: 0.1            # [s] 1ステップの最大処理時間（超えたら警告）
+  real_time_factor: 1.0         # 実時間の何倍で動かすか（デフォルト値: 1.0 = リアルタイム）
+  max_step_time: 0.1            # [s] 1ステップの最大処理時間（デフォルト値: 0.1、超えたら警告）
 
   # 初期状態（world_bundle の timebase.yaml を上書き可能）
   initial_pose:
@@ -137,11 +138,11 @@ simulation:
     roll: 0.0
     pitch: 0.0
     yaw: 0.0
-  initial_velocity: 0.0         # [m/s]
+  initial_velocity: 0.0         # [m/s]（デフォルト値: 0.0）
 
   # 制御
-  control_timeout_sec: 1.0      # 制御入力タイムアウト
-  control_mode: "ackermann"     # "ackermann" or "twist" or "custom"
+  control_timeout_sec: 1.0      # 制御入力タイムアウト（デフォルト値: 1.0）
+  control_mode: "ackermann"     # デフォルト値: "ackermann"（"twist" または "custom" もサポート）
 ```
 
 #### センサパラメータ
@@ -150,22 +151,22 @@ simulation:
 sensors:
   # カメラ（world_bundle の calibration.yaml を基本とする）
   camera:
-    enable: true
-    rate_override: null         # [Hz] nullの場合は world_bundle の設定を使用
+    enable: true  # デフォルト値: true
+    rate_override: null         # [Hz] デフォルト値: null（null の場合は world_bundle の設定を使用）
     cameras: ["front"]          # 有効化するカメラ（省略時は全カメラ）
 
   # LiDAR
   lidar:
-    enable: true
-    rate_override: null
+    enable: true  # デフォルト値: true
+    rate_override: null  # デフォルト値: null
     lidars: ["top"]
 
     # Raycast設定
     raycast:
-      use_heightmap: true       # heightmap を使用
-      use_static_mesh: false    # static_mesh を使用（重い）
-      add_noise: false          # ノイズ追加
-      noise_std: 0.02           # [m] ノイズ標準偏差
+      use_heightmap: true       # デフォルト値: true
+      use_static_mesh: false    # デフォルト値: false
+      add_noise: false          # デフォルト値: false
+      noise_std: 0.02           # [m] デフォルト値: 0.02
 ```
 
 #### フレームID
@@ -292,7 +293,7 @@ map
 
 ### 1. Launch ファイル
 
-#### bringup.launch.xml（推奨）
+#### bringup.launch.xml（デフォルト起動方法）
 
 ```bash
 ros2 launch gs_ros2_simulator bringup.launch.xml \
@@ -304,13 +305,13 @@ ros2 launch gs_ros2_simulator bringup.launch.xml \
 **Launch 引数**:
 | 引数 | 型 | デフォルト | 説明 |
 |-----|---|-----------|------|
-| `world` | string | 必須 | world_bundle パス |
-| `vehicle_config` | string | `config/default_vehicle.yaml` | 車両パラメータ |
-| `sim_config` | string | `config/default_sim.yaml` | シミュレーションパラメータ |
-| `sensor_config` | string | `config/default_sensors.yaml` | センサパラメータ |
-| `use_sim_time` | bool | `true` | シミュレーション時刻使用 |
-| `rviz` | bool | `true` | RViz起動 |
-| `log_level` | string | `info` | ログレベル（debug/info/warn/error） |
+| `world` | string | MUST | world_bundle パス |
+| `vehicle_config` | string | デフォルト値: `config/default_vehicle.yaml` | 車両パラメータ |
+| `sim_config` | string | デフォルト値: `config/default_sim.yaml` | シミュレーションパラメータ |
+| `sensor_config` | string | デフォルト値: `config/default_sensors.yaml` | センサパラメータ |
+| `use_sim_time` | bool | デフォルト値: `true` | シミュレーション時刻使用 |
+| `rviz` | bool | デフォルト値: `true` | RViz起動 |
+| `log_level` | string | デフォルト値: `info` | ログレベル（debug/info/warn/error） |
 
 ---
 
@@ -318,7 +319,7 @@ ros2 launch gs_ros2_simulator bringup.launch.xml \
 
 ### 2. ノード構成
 
-#### 単一ノード構成（推奨: 初期実装）
+#### 単一ノード構成（デフォルト推奨構成: 初期実装）
 
 ```
 simulator_node
@@ -352,13 +353,13 @@ sim_clock_node            # /clock配信
 
 ## 動作モード
 
-### 1. Normal モード（デフォルト）
+### 1. Normal モード（デフォルト動作モード）
 
 ```bash
 ros2 launch gs_ros2_simulator bringup.launch.xml world:=worlds/scene_001
 ```
 
-- リアルタイムで動作（real_time_factor=1.0）
+- リアルタイムで動作（デフォルト値: real_time_factor=1.0）
 - 制御入力を受け付け、closed-loop で動作
 
 ---
@@ -491,11 +492,11 @@ t=83.3ms: sim, camera
 ### リアルタイム性
 
 - **目標**: real_time_factor ≥ 1.0 で安定動作
-- **最低要件**:
-  - GPU: NVIDIA RTX 3060 以上（CUDA 11.8+）
-  - CPU: 4コア以上
-  - RAM: 8GB 以上
-  - ストレージ: SSD推奨
+- **必須システム要件**:
+  - GPU: NVIDIA RTX 3060 以上（CUDA 11.8+）（MUST）
+  - CPU: 4コア以上（MUST）
+  - RAM: 8GB 以上（MUST）
+  - ストレージ: SSD（HDDは性能要件を満たさない可能性あり）（MUST）
 
 ### 処理時間目安（RTX 4090の場合）
 
@@ -564,7 +565,7 @@ find_package(Vulkan REQUIRED)     # Vulkan backend
 
 ## テスト・検証
 
-### 単体テスト（必須）
+### 単体テスト（MUST）
 
 ```bash
 colcon test --packages-select gs_ros2_simulator
@@ -633,5 +634,6 @@ class GaussianLiDAR : public LiDARGeneratorInterface { ... };  // 将来
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
+| 1.0.2 | 2026-02-15 | 曖昧な表現を明確化（推奨→デフォルト値、必須→MUST） |
 | 1.0.1 | 2026-02-15 | 内部設計リンク追加、スキーマリファレンス修正 |
 | 1.0.0 | 2026-02-14 | 初版作成 |

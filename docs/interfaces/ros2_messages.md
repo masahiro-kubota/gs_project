@@ -1,7 +1,7 @@
 # ROS2 メッセージ定義契約
 
-**バージョン**: 1.0.0
-**最終更新**: 2026-02-14
+**バージョン**: 1.0.2
+**最終更新**: 2026-02-15
 
 ## 概要
 
@@ -27,28 +27,28 @@
 
 ### 1. 制御入力（Control Input）
 
-#### 推奨: 標準メッセージを使用
+#### デフォルト推奨: 標準メッセージを使用
 ```
-# 制御入力には標準メッセージを使用することを推奨
+# 制御入力には標準メッセージを使用することをデフォルトとして推奨
 ackermann_msgs/AckermannDriveStamped  # ステア + 速度/加速度制御
 geometry_msgs/TwistStamped             # 簡易的な速度制御
 ```
 
-#### カスタムメッセージ（必要な場合のみ）
+#### カスタムメッセージ（Optional: 必要な場合のみ）
 ```
 gs_sim_msgs/VehicleControlCmd
 ---
 std_msgs/Header header
 
 # 操舵
-float32 steering_angle        # [rad] 正=左
-float32 steering_angle_rate   # [rad/s] オプション
+float32 steering_angle        # [rad] 正=左（必須）
+float32 steering_angle_rate   # [rad/s] Optional（省略可能）
 
 # 駆動/制動
-float32 throttle              # [0.0-1.0] アクセル開度
-float32 brake                 # [0.0-1.0] ブレーキ圧
-float32 target_velocity       # [m/s] 目標速度（速度制御モード）
-float32 target_acceleration   # [m/s^2] 目標加速度（加速度制御モード）
+float32 throttle              # [0.0-1.0] アクセル開度（必須）
+float32 brake                 # [0.0-1.0] ブレーキ圧（必須）
+float32 target_velocity       # [m/s] 目標速度（速度制御モード、必須）
+float32 target_acceleration   # [m/s^2] 目標加速度（加速度制御モード、必須）
 
 # ギア・モード
 uint8 gear                    # 0=P, 1=R, 2=N, 3=D
@@ -158,8 +158,8 @@ string[] available_lidars           # LiDARリスト（例: ["top"]）
 gs_sim_msgs/srv/ResetWorld
 ---
 # Request
-geometry_msgs/Pose initial_pose     # 初期位置（空の場合はデフォルト）
-bool reset_time                     # シミュレーション時刻もリセットするか
+geometry_msgs/Pose initial_pose     # 初期位置（Optional: 省略時はデフォルト値を使用）
+bool reset_time                     # シミュレーション時刻もリセットするか（必須）
 
 ---
 # Response
@@ -175,8 +175,8 @@ string message
 gs_sim_msgs/srv/SetEgoPose
 ---
 # Request
-geometry_msgs/Pose pose
-geometry_msgs/Twist twist           # オプション: 初期速度
+geometry_msgs/Pose pose  # 必須
+geometry_msgs/Twist twist           # Optional（省略可能）: 初期速度
 
 ---
 # Response
@@ -209,8 +209,8 @@ gs_sim_msgs/WorldInfo world_info    # 読み込んだワールド情報
 gs_sim_msgs/srv/SimulationControl
 ---
 # Request
-uint8 command
-bool step_once                      # step モードの場合、1ステップだけ進める
+uint8 command  # 必須
+bool step_once                      # Optional: step モードの場合、1ステップだけ進める
 
 uint8 CMD_PAUSE = 0
 uint8 CMD_RESUME = 1
@@ -343,4 +343,6 @@ map
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
+| 1.0.2 | 2026-02-15 | 曖昧な表現を明確化（オプション→Optional、必須の明記） |
+| 1.0.1 | 2026-02-15 | （スキップ） |
 | 1.0.0 | 2026-02-14 | 初版作成 |

@@ -179,7 +179,7 @@ sim_clock_node            # /clock配信
 - **ステートレス**: VehicleDynamics は状態を保持せず、純粋な計算のみ実施
 - ダイナミクスモデルはインターフェースで抽象化（差し替え可能）
 - タイムアウト時は緊急停止（減速度 3.0 m/s²）
-- 積分法は Runge-Kutta 4次（RK4）推奨
+- 積分法は Runge-Kutta 4次（RK4）を推奨
 - 詳細は **[design.md](design.md#3-vehicledynamics)** 参照
 
 ---
@@ -206,7 +206,7 @@ sim_clock_node            # /clock配信
 - GroundContact は受動的に高さを返す（Push ではなく Pull パターン）
 
 **実装ノート**:
-- heightmap の読み込みは Eigen 推奨（C++）または NumPy（Python）
+- heightmap の読み込みは Eigen（C++）または NumPy（Python）を推奨
 - 双線形補間で滑らかな高さ変化を実現
 - 将来的には `static_mesh.glb` を使った高精度接地も可能
 - 詳細は **[design.md](design.md#4-groundcontact)** 参照
@@ -264,7 +264,7 @@ sim_clock_node            # /clock配信
 2. センサトリガーのタイミングで点群を生成
    - LiDARレート（例: 20Hz）に従って実行
    - Ego pose と extrinsics から world-to-lidar 変換を計算
-   - Raycast 実行（GPU 推奨）
+   - Raycast 実行（GPUを推奨）
      - **方式1**: heightmap を使った 2.5D Raycast（初期実装）
      - **方式2**: static_mesh を使った 3D Raycast（将来拡張）
      - **方式3**: Gaussian を使った Raycast（将来研究課題）
@@ -320,7 +320,7 @@ sim_clock_node            # /clock配信
 
 **実装ノート**:
 - rclcpp の Node を継承
-- executor は SingleThreadedExecutor 推奨（初期実装）
+- executor は SingleThreadedExecutor を推奨（初期実装）
 - MultiThreadedExecutor は Phase 2 で検討
 
 ---

@@ -1,7 +1,7 @@
 # GS-ROS2 Simulator 共通規約
 
-**バージョン**: 1.0.0
-**最終更新**: 2026-02-14
+**バージョン**: 1.0.2
+**最終更新**: 2026-02-15
 
 ## 概要
 
@@ -32,7 +32,7 @@
 - **右手座標系**
 
 #### odom フレーム
-- **用途**: オドメトリ座標系（通常はmapと一致）
+- **用途**: オドメトリ座標系（デフォルトでは map と一致）
 - **原点**: ego車両の初期位置、または map と同一
 - **軸方向**: map と同一（ENU）
 - **ドリフト**: 現在のスコープではドリフトなし（map と固定）
@@ -180,7 +180,7 @@ invalid_value = np.nan  # float32の場合も np.float32(np.nan)
 
 ### シンボリックリンク
 
-**許容**: world_bundle 内のシンボリックリンクは許容
+**サポート**: world_bundle 内のシンボリックリンクはサポート対象
 - ただし、リンク先も world_bundle 内に存在すること（外部参照禁止）
 
 ### ファイル名規則
@@ -196,19 +196,19 @@ invalid_value = np.nan  # float32の場合も np.float32(np.nan)
 
 **形式**: `{位置}_{サブ位置}` （オプション）
 
-**推奨ID**:
+**ID例**:
 - `front`, `left`, `right`, `rear`（単一カメラ）
 - `front_left`, `front_right`, `rear_left`, `rear_right`（複数カメラ）
 
 **禁則**:
 - スペース、特殊文字禁止
-- 数字のみ（`cam_0`）は非推奨（意味が不明確）
+- 数字のみ（`cam_0`）は避けること（意味が不明確）
 
 ### LiDAR
 
 **形式**: `{位置}`
 
-**推奨ID**:
+**ID例**:
 - `top`, `front`, `rear`
 
 ---
@@ -284,7 +284,7 @@ if major != SUPPORTED_MAJOR or minor < SUPPORTED_MINOR_MIN:
 
 ### タイムアウト
 
-**制御入力タイムアウト**: 1.0秒（デフォルト）
+**制御入力タイムアウト**: デフォルト 1.0秒
 
 - タイムアウト後は **緊急停止**
   - ステア: 現在値保持
@@ -311,7 +311,7 @@ t=250ms (25*10)  → trigger (誤差 -0.00ms)
 ...
 ```
 
-**許容誤差**: ±5ms（sim_dt の半分）
+**許容誤差**: 最大 ±5ms（sim_dt の半分）
 
 ### センサ間同期
 
@@ -321,11 +321,11 @@ t=250ms (25*10)  → trigger (誤差 -0.00ms)
 
 ## Gaussian形式の詳細仕様
 
-### PLY形式（推奨）
+**標準フォーマット**: PLY形式（binary_little_endian）
 
 **ファイル名**: `background.splat.ply`
 
-**PLYヘッダ**:
+**PLYヘッダ仕様**:
 ```
 ply
 format binary_little_endian 1.0
@@ -351,29 +351,15 @@ end_header
 <binary data>
 ```
 
-**順序**:
+**必須プロパティ順序**:
 - 回転: クォータニオン `[x, y, z, w]` → `rot_0, rot_1, rot_2, rot_3`
 - SH係数: DC成分（3個）+ 高次成分（sh_degree=3の場合 45個）
 
-**SH次数**: `sh_degree` は `render_config.json` で定義
+**SH次数**: `sh_degree` は `render_config.json` で定義（MUST）
 
----
-
-### NPZ形式（代替）
-
-**ファイル名**: `background.npz`
-
-**必須キー**:
-```python
-{
-  'positions': np.ndarray[N, 3],  # float32, [x, y, z]
-  'scales': np.ndarray[N, 3],     # float32, [scale_x, scale_y, scale_z]
-  'rotations': np.ndarray[N, 4],  # float32, quaternion [x, y, z, w]
-  'opacities': np.ndarray[N, 1],  # float32
-  'sh_dc': np.ndarray[N, 3],      # float32, DC成分 [R, G, B]
-  'sh_rest': np.ndarray[N, (deg+1)^2-1, 3],  # float32, 高次SH係数
-}
-```
+**制約**:
+- ASCII形式（`format ascii 1.0`）は**サポート対象外**
+- NPZ形式は**サポート対象外**（開発用ツールでの変換は可）
 
 ---
 
@@ -383,7 +369,7 @@ end_header
 
 **座標系**: map frame の X-Y 平面（Z座標は無視）
 
-**MultiPolygon 推奨**: 複数の走行可能領域がある場合
+**MultiPolygon サポート**: 複数の走行可能領域がある場合に使用可能
 
 ```json
 {
@@ -413,10 +399,9 @@ end_header
 
 ### 複数ポリゴンの優先順位
 
-**priority フィールド**: 数値が小さいほど優先
+**priority フィールド**: 数値が小さいほど優先（デフォルト値: 0）
 
 - 同一地点が複数ポリゴンに含まれる場合、priority の小さい方を採用
-- デフォルト: 0
 
 ### 穴あきポリゴン
 
@@ -476,7 +461,7 @@ end_header
 
 **world_bundle は読み込み専用として扱う**
 
-- 複数プロセスからの同時読み込み: **許容**
+- 複数プロセスからの同時読み込み: **サポート対象**
 - ファイルロック: **不要**
 - 書き込み: **禁止**（起動中の world_bundle への書き込みは未定義動作）
 

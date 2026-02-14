@@ -1,6 +1,6 @@
 # gs_world_builder 内部コンポーネント設計
 
-**バージョン**: 1.0.1
+**バージョン**: 1.0.2
 **最終更新**: 2026-02-15
 
 ## 概要
@@ -95,7 +95,7 @@ workspace/00_mcap_ingest/
 
 **実装ノート**:
 - カメラ画像のデコードは CPU 負荷が高いため、必要な場合のみ実行
-- LiDAR は PCD 形式推奨（Open3D で読み込みやすい）
+- LiDAR は PCD 形式を推奨（Open3D で読み込みやすい）
 - `poses.csv` のフォーマット: `timestamp,x,y,z,qx,qy,qz,qw`
 
 ---
@@ -229,7 +229,6 @@ workspace/04_gs_export/
 **実装ノート**:
 - **ランタイムが DriveStudio に依存しない**ための最重要コンポーネント
 - PLY ヘッダのフォーマットを厳密に ([world_bundle_schema.md](../../docs/interfaces/world_bundle_schema.md) 参照)
-- 代替として .npz 形式も許容
 
 ---
 
@@ -264,7 +263,7 @@ workspace/05_geometry/
 5. PCD 形式で保存
 
 **実装ノート**:
-- Open3D 推奨（統合、フィルタリング機能が豊富）
+- Open3D を推奨（統合、フィルタリング機能が豊富）
 - メモリ使用量に注意（大規模シーンの場合）
 - 動的物体フィルタリングは初期実装では省略可
 
@@ -287,8 +286,8 @@ workspace/05_geometry/
 ```
 
 **処理内容**:
-1. 点群を X-Y 平面にグリッド分割（解像度: 0.1m 推奨）
-2. 各グリッドセルで Z 座標の代表値を計算（中央値推奨）
+1. 点群を X-Y 平面にグリッド分割（デフォルト解像度: 0.1m）
+2. 各グリッドセルで Z 座標の代表値を計算（中央値を推奨）
 3. メディアンフィルタで平滑化
 4. 外れ値除去（統計的手法）
 5. Little Endian float32 配列として `heightmap.bin` に保存
@@ -319,7 +318,7 @@ workspace/05_geometry/
 **処理内容**:
 1. Ego軌跡を読み込み
 2. 軌跡の左右に buffer_width（例: 10m）のバッファを設定
-3. Polygon を生成（Shapely 推奨）
+3. Polygon を生成（Shapely を推奨）
 4. ポリゴン簡略化（Douglas-Peucker アルゴリズム）
 5. GeoJSON 形式で保存（[world_bundle_schema.md](../../docs/interfaces/world_bundle_schema.md) 準拠）
 
@@ -352,7 +351,7 @@ workspace/05_geometry/
 3. glTF 2.0 Binary (.glb) 形式で保存
 
 **実装ノート**:
-- **初期実装では省略推奨**（heightmap で代用可能）
+- **初期実装では省略を推奨**（heightmap で代用可能）
 - 計算コストが高い
 - 高精度 LiDAR raycast が必要になったら実装
 
@@ -583,5 +582,6 @@ gs-world-builder build --input tests/data/minimal.mcap --output /tmp/test_world
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
+| 1.0.2 | 2026-02-15 | 曖昧な表現を明確化（「推奨」を「を推奨」に統一、NPZ代替フォーマット削除） |
 | 1.0.1 | 2026-02-15 | 誤ったリファレンス修正、終了コード4追加 |
 | 1.0.0 | 2026-02-14 | 初版作成 |

@@ -1,7 +1,7 @@
 # World Bundle データフォーマット契約
 
-**バージョン**: 1.0.0
-**最終更新**: 2026-02-14
+**バージョン**: 1.0.2
+**最終更新**: 2026-02-15
 
 ## 概要
 
@@ -30,7 +30,7 @@ worlds/<scene_id>/
 ├── world.yaml              # 必須: エントリーポイント
 ├── metadata.json           # 必須: メタ情報
 ├── gaussians/              # 必須: 3DGS データ
-│   ├── background.splat.ply    # または background.npz
+│   ├── background.splat.ply    # 3D Gaussian Splatting データ (PLY形式)
 │   └── render_config.json      # レンダリング設定
 ├── geometry/               # 必須: 走行用幾何
 │   ├── heightmap.bin           # 地面高さマップ（2.5D）
@@ -148,22 +148,23 @@ preview:  # optional
 
 #### 3-1. background.splat.ply（Gaussian データ）
 
-**フォーマット**: PLY 形式
+**フォーマット**: PLY形式（binary_little_endian）
 
-**PLY ヘッダ形式**: `format binary_little_endian 1.0` （推奨）
-- ASCII形式（`format ascii 1.0`）も許容だが、ファイルサイズが大きくなる
+**PLY ヘッダ形式**: `format binary_little_endian 1.0` （MUST）
 
 **必須属性**:
-- `x`, `y`, `z`: 位置 (float32) [m]
-- `scale_0`, `scale_1`, `scale_2`: スケール (float32)
-- `rot_0`, `rot_1`, `rot_2`, `rot_3`: 回転クォータニオン (float32) **[x, y, z, w] 順**
-- `opacity`: 不透明度 (float32)
-- `f_dc_0`, `f_dc_1`, `f_dc_2`: SH係数 DC成分 (float32) [R, G, B]
-- `f_rest_*`: SH係数 高次成分（オプション, float32）
+- `x`, `y`, `z`: 位置 (float32) [m]（MUST）
+- `scale_0`, `scale_1`, `scale_2`: スケール (float32)（MUST）
+- `rot_0`, `rot_1`, `rot_2`, `rot_3`: 回転クォータニオン (float32) **[x, y, z, w] 順**（MUST）
+- `opacity`: 不透明度 (float32)（MUST）
+- `f_dc_0`, `f_dc_1`, `f_dc_2`: SH係数 DC成分 (float32) [R, G, B]（MUST）
+- `f_rest_*`: SH係数 高次成分（sh_degreeに応じて必須, float32）（MUST）
 
-**詳細**: [`conventions.md`](../conventions.md) の「Gaussian形式」セクション参照
+**詳細仕様**: [`conventions.md#L322-L358`](../conventions.md#L322-L358) の「Gaussian形式」セクション参照
 
-**代替フォーマット**: `.npz` (NumPy形式)も許容（キー名は conventions.md 参照）
+**制約**:
+- ASCII形式は**サポート対象外**（MUST）
+- NPZ形式は**サポート対象外**（MUST）
 
 ---
 
@@ -282,7 +283,7 @@ max_height: 15.0      # [m]
 
 - 静的環境の三角メッシュ
 - 高精度 LiDAR raycast や衝突判定に使用
-- オプション：無い場合は heightmap で代用
+- Optional（省略可能）：無い場合は heightmap で代用
 
 ---
 
@@ -314,11 +315,11 @@ cameras:
       p1: 0.0
       p2: 0.0
 
-    extrinsics:  # base_link -> camera
-      translation: [2.0, 0.0, 1.5]  # [x, y, z]
-      rotation_quat: [0.0, 0.0, 0.0, 1.0]  # [x, y, z, w]
+    extrinsics:  # base_link -> camera（必須）
+      translation: [2.0, 0.0, 1.5]  # [x, y, z]（必須）
+      rotation_quat: [0.0, 0.0, 0.0, 1.0]  # [x, y, z, w]（必須）
 
-    rate_hz: 12.0
+    rate_hz: 12.0  # 必須
 
   # left, right, rear も同様
 
@@ -326,11 +327,11 @@ lidars:
   top:
     frame_id: "lidar_top"
 
-    extrinsics:  # base_link -> lidar
-      translation: [0.0, 0.0, 2.0]
-      rotation_quat: [0.0, 0.0, 0.0, 1.0]
+    extrinsics:  # base_link -> lidar（必須）
+      translation: [0.0, 0.0, 2.0]  # 必須
+      rotation_quat: [0.0, 0.0, 0.0, 1.0]  # 必須
 
-    spec:
+    spec:  # 必須
       model: "velodyne_vls128"
       channels: 128
       horizontal_resolution: 0.2  # [deg]
@@ -376,7 +377,7 @@ lidars:
 **重要: データ一貫性**
 
 - **`calibration.yaml` が正**: tf_static.json は calibration.yaml から派生して生成される
-- **食い違いは許容しない**: validation で不一致を検出した場合はエラー
+- **不一致は禁止**: validation で不一致を検出した場合はエラー（MUST）
 - 詳細: [`conventions.md`](../conventions.md) の「データの一貫性規則」参照
 
 ---
@@ -398,7 +399,7 @@ sensor_rates:
   camera: 12.0          # [Hz]
   lidar: 20.0           # [Hz]
 
-# 初期Ego位置（オプション、空の場合は原点）
+# 初期Ego位置（Optional、省略時はデフォルト値: 原点）
 initial_pose:
   position: [0.0, 0.0, 0.0]
   orientation: [0.0, 0.0, 0.0, 1.0]  # quaternion [x,y,z,w]
@@ -492,7 +493,7 @@ worlds/<scene_id>/
 
 ## 検証ツール
 
-`gs_world_builder` は world_bundle 生成後に検証スクリプトを提供すべき：
+`gs_world_builder` は world_bundle 生成後に検証スクリプトを提供する（MUST）：
 
 ```bash
 python -m gs_world_builder.validate /path/to/world_bundle
@@ -512,4 +513,6 @@ python -m gs_world_builder.validate /path/to/world_bundle
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
+| 1.0.2 | 2026-02-15 | 曖昧な表現を明確化（オプション→Optional、必須の明記） |
+| 1.0.1 | 2026-02-15 | （スキップ） |
 | 1.0.0 | 2026-02-14 | 初版作成 |

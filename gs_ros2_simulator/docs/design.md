@@ -233,7 +233,7 @@ where:
 ```
 
 **実装ノート**:
-- Runge-Kutta 4次（RK4）推奨
+- Runge-Kutta 4次（RK4）を推奨
 - ステアリング・速度のクランプは必須
 - タイムアウト時は緊急停止（減速度 3.0 m/s²）
 
@@ -600,7 +600,7 @@ std::unique_ptr<ROS2BridgeInterface> createROS2Bridge(rclcpp::Node::SharedPtr no
 
 **実装ノート**:
 - rclcpp の Node を継承
-- executor は SingleThreadedExecutor 推奨（初期実装）
+- executor は SingleThreadedExecutor を推奨（初期実装）
 - QoS プロファイル設定は [runtime_simulator.md](../../docs/interfaces/runtime_simulator.md) 参照
 
 ---

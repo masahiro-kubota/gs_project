@@ -1,7 +1,7 @@
 # gs_world_builder 内部コンポーネント間インターフェース
 
-**バージョン**: 1.0.0
-**最終更新**: 2026-02-14
+**バージョン**: 1.0.2
+**最終更新**: 2026-02-15
 
 ## 概要
 
@@ -122,10 +122,10 @@ mcap
 | `qw` | float64 | - | クォータニオン w成分 | \|\|q\|\| = 1 |
 
 **データ制約**:
-- 最小行数: 10行
-- timestamp間隔: 0.001s ≤ Δt ≤ 1.0s
-- クォータニオン正規化: `sqrt(qx² + qy² + qz² + qw²) = 1.0 ± 1e-6`
-- 座標系: map frame (ENU)
+- 最小行数: 10行（MUST）
+- timestamp間隔: 0.001s ≤ Δt ≤ 1.0s（MUST）
+- クォータニオン正規化: `sqrt(qx² + qy² + qz² + qw²) = 1.0 ± 1e-6`（MUST）
+- 座標系: map frame (ENU)（MUST）
 
 **消費者**: calibration_builder, geometry_builder
 
@@ -178,8 +178,8 @@ mcap
   - `transform.rotation.{x,y,z,w}`: float64, クォータニオン [x,y,z,w]
 
 **制約**:
-- transforms配列は timestamp 昇順でソート
-- クォータニオン正規化: ||q|| = 1.0 ± 1e-6
+- transforms配列は timestamp 昇順でソート（MUST）
+- クォータニオン正規化: ||q|| = 1.0 ± 1e-6（MUST）
 
 **消費者**: calibration_builder
 
@@ -196,8 +196,8 @@ mcap
 **スキーマ**: `tf.json` と同一構造だが、timestamp は無視される
 
 **制約**:
-- 同一の parent-child ペアは1つのみ
-- クォータニオン正規化: ||q|| = 1.0 ± 1e-6
+- 同一の parent-child ペアは1つのみ（MUST）
+- クォータニオン正規化: ||q|| = 1.0 ± 1e-6（MUST）
 
 **消費者**: calibration_builder
 
@@ -253,9 +253,9 @@ mcap
     - `avg_rate`: float64, 平均レート [Hz]
 
 **制約**:
-- timestamps配列は昇順ソート済み
-- `frame_count == len(timestamps)`
-- `avg_rate = frame_count / (end_time - start_time)`
+- timestamps配列は昇順ソート済み（MUST）
+- `frame_count == len(timestamps)`（MUST）
+- `avg_rate = frame_count / (end_time - start_time)`（MUST）
 
 **消費者**: (参照用、トレーサビリティ)
 
@@ -316,9 +316,9 @@ mcap
     - `file_path`: string, 抽出ファイルへの相対パス
 
 **制約**:
-- frames配列は sim_time 昇順でソート
-- sim_time は 0.0 から開始
-- すべてのセンサが最低1回はトリガーされる
+- frames配列は sim_time 昇順でソート（MUST）
+- sim_time は 0.0 から開始（MUST）
+- すべてのセンサが最低1回はトリガーされる（MUST）
 
 **消費者**: drivesim_dataset_converter
 
@@ -337,7 +337,7 @@ mcap
 version: "1.0.0"
 
 simulation:
-  dt: 0.01              # [s] 推奨シミュレーションタイムステップ
+  dt: 0.01              # [s] シミュレーションタイムステップ（デフォルト推奨値）
   start_time: 0.0       # [s] 開始時刻
 
 sensor_rates:
@@ -361,9 +361,9 @@ initial_pose:
 - `initial_pose.velocity`: array of 3 float64, [m/s], [vx, vy, vz]
 
 **制約**:
-- `dt > 0.0`
-- `sensor_rates > 0.0`
-- クォータニオン正規化: ||q|| = 1.0 ± 1e-6
+- `dt > 0.0`（MUST）
+- `sensor_rates > 0.0`（MUST）
+- クォータニオン正規化: ||q|| = 1.0 ± 1e-6（MUST）
 
 **消費者**: world_bundle_packer
 
@@ -397,7 +397,7 @@ raw_extract/images/
 
 **制約**:
 - 各カメラディレクトリ内のファイルは連番
-- 欠番は許容されない
+- 欠番は禁止
 - ファイル名の番号 == frame_index
 
 **消費者**: drivesim_dataset_converter
@@ -411,10 +411,10 @@ raw_extract/images/
 **ファイルパス**: `workspace/00_mcap_ingest/raw_extract/lidar/XXXXXXXXXX.pcd` (または `.npz`)
 
 **ファイル名規則**:
-- フォーマット: `%010d.pcd` または `%010d.npz` (10桁ゼロ埋め)
+- フォーマット: `%010d.pcd` (10桁ゼロ埋め)
 - frame_index に対応（0始まり）
 
-**フォーマット（PCD推奨）**:
+**フォーマット（PCD）**:
 ```
 VERSION 0.7
 FIELDS x y z intensity
@@ -429,23 +429,14 @@ DATA binary
 <binary data>
 ```
 
-**フィールド仕様（PCD）**:
+**フィールド仕様**:
 - `x, y, z`: float32, [m], base_link frame での座標
 - `intensity`: float32, 反射強度（オプション、0.0-255.0）
 
-**フォーマット（NPZ代替）**:
-```python
-{
-  'points': np.ndarray[N, 3],  # float32, [x, y, z]
-  'intensity': np.ndarray[N],  # float32, optional
-  'timestamp': float64         # UNIX epoch time
-}
-```
-
 **制約**:
-- 座標系: base_link frame (FLU)
-- 点数: 最低100点、最大200,000点
-- x, y, z に NaN/Inf を含まない
+- 座標系: base_link frame (FLU)（MUST）
+- 点数: 最低100点、最大200,000点（MUST）
+- x, y, z に NaN/Inf を含まない（MUST）
 
 **消費者**: geometry_builder (pointcloud_integrator)
 
@@ -663,8 +654,8 @@ workspace/03_gs_training/checkpoints/
   - `loss`: float64, Loss値
 
 **制約**:
-- `best_iteration` は `iterations` 配列に存在する iteration
-- iterations配列は iteration 昇順でソート
+- `best_iteration` は `iterations` 配列に存在する iteration（MUST）
+- iterations配列は iteration 昇順でソート（MUST）
 
 **消費者**: gs_exporter
 
@@ -691,9 +682,9 @@ workspace/03_gs_training/checkpoints/
 - `f_rest_*`: float32, SH高次成分（sh_degree に依存）
 
 **制約**:
-- エンディアン: Little Endian
-- Gaussian数: 100 ~ 5,000,000
-- クォータニオン正規化: ||q|| = 1.0 ± 1e-6
+- エンディアン: Little Endian（MUST）
+- Gaussian数: 100 ~ 5,000,000（MUST）
+- クォータニオン正規化: ||q|| = 1.0 ± 1e-6（MUST）
 
 **消費者**: world_bundle_packer
 
@@ -746,9 +737,9 @@ DATA binary
 
 **制約**:
 - 座標系: map frame (ENU)
-- 点数: 最低10,000点
-- 動的物体がフィルタリングされている（推奨）
-- x, y, z に NaN/Inf を含まない
+- 点数: 最低10,000点（MUST）
+- 動的物体のフィルタリング（MUST）
+- x, y, z に NaN/Inf を含まない（MUST）
 
 **消費者**: ground_surface_builder, static_mesh_builder
 
@@ -770,9 +761,9 @@ DATA binary
 - 無効領域: NaN (IEEE 754 NaN)
 
 **制約**:
-- エンディアン: Little Endian
-- データサイズ: `width * height * 4 bytes`
-- NaN/Inf は無効領域のみで使用
+- エンディアン: Little Endian（MUST）
+- データサイズ: `width * height * 4 bytes`（MUST）
+- NaN/Inf は無効領域のみで使用（MUST）
 
 **消費者**: world_bundle_packer
 
@@ -789,8 +780,8 @@ DATA binary
 **スキーマ**: [`../../docs/interfaces/world_bundle_schema.md#4-2`](../../docs/interfaces/world_bundle_schema.md#4-2) に準拠
 
 **制約**:
-- `width * height` == heightmap.bin のセル数
-- `resolution > 0.0`
+- `width * height` == heightmap.bin のセル数（MUST）
+- `resolution > 0.0`（MUST）
 
 **消費者**: world_bundle_packer
 
@@ -807,10 +798,10 @@ DATA binary
 **スキーマ**: [`../../docs/conventions.md#L380-L434`](../../docs/conventions.md#L380-L434) および [`../../docs/interfaces/world_bundle_schema.md#4-3`](../../docs/interfaces/world_bundle_schema.md#4-3) に準拠
 
 **制約**:
-- 座標系: map frame の X-Y 平面
-- 最低1つの Polygon feature
-- 外周は反時計回り (CCW)
-- 穴は時計回り (CW)
+- 座標系: map frame の X-Y 平面（MUST）
+- 最低1つの Polygon feature（MUST）
+- 外周は反時計回り (CCW)（MUST）
+- 穴は時計回り (CW)（MUST）
 
 **消費者**: world_bundle_packer
 
@@ -827,8 +818,8 @@ DATA binary
 **スキーマ**: [`../../docs/interfaces/world_bundle_schema.md#4-4`](../../docs/interfaces/world_bundle_schema.md#4-4) に準拠
 
 **制約**:
-- 座標系: map frame
-- 三角形数: 推奨 ≤ 10,000,000
+- 座標系: map frame（MUST）
+- 三角形数: 目安上限 10,000,000
 - **オプション**: 初期実装では省略可
 
 **消費者**: world_bundle_packer
@@ -873,8 +864,8 @@ DATA binary
 - `errors`, `warnings`: array of string
 
 **制約**:
-- validation.status == "success" の場合のみ world_bundle が生成される
-- validation.status == "failed" の場合、errors 配列に詳細
+- validation.status == "success" の場合のみ world_bundle が生成される（MUST）
+- validation.status == "failed" の場合、errors 配列に詳細（MUST）
 
 **消費者**: トレーサビリティ、再ビルド
 
@@ -995,8 +986,8 @@ def validate_frameset_files(frameset_json, workspace_dir):
 - `code`: string, エラーコード（上記の表を参照）
 - `component`: string, エラーが発生したコンポーネント名
 - `message`: string, 人間可読なエラーメッセージ
-- `details`: object, エラーの詳細情報（任意）
-- `suggestion`: string, 解決方法の提案（任意だが推奨）
+- `details`: object, エラーの詳細情報（Optional）
+- `suggestion`: string, 解決方法の提案（Optional、デフォルト推奨）
 
 ---
 
@@ -1021,4 +1012,5 @@ def validate_frameset_files(frameset_json, workspace_dir):
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
+| 1.0.2 | 2026-02-15 | 曖昧な表現を修正（「推奨」→「デフォルト推奨値」「目安」、「許容されない」→「禁止」、NPZ代替フォーマット削除） |
 | 1.0.0 | 2026-02-14 | 初版作成 |

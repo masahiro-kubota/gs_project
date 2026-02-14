@@ -42,9 +42,9 @@ struct EgoPose {
 ```
 
 **制約**:
-- 座標系: map frame (ENU)
-- クォータニオン正規化: `sqrt(qx² + qy² + qz² + qw²) = 1.0 ± 1e-6`
-- `qw` の初期値は 1.0（単位クォータニオン）
+- 座標系: map frame (ENU)（MUST）
+- クォータニオン正規化: `sqrt(qx² + qy² + qz² + qw²) = 1.0 ± 1e-6`（MUST）
+- `qw` の初期値は 1.0（単位クォータニオン）（MUST）
 
 **消費者**: すべてのコンポーネント
 
@@ -70,10 +70,10 @@ struct EgoTwist {
 ```
 
 **制約**:
-- 座標系: base_link frame (FLU)
-- vx: 前進方向（正が前進）
-- vy: 左方向（正が左）
-- wz: ヨー角速度（正が左旋回）
+- 座標系: base_link frame (FLU)（MUST）
+- vx: 前進方向（正が前進）（MUST）
+- vy: 左方向（正が左）（MUST）
+- wz: ヨー角速度（正が左旋回）（MUST）
 
 **消費者**: VehicleDynamics, EgoStateCore, ROS2Bridge
 
@@ -123,10 +123,10 @@ struct ControlInput {
 ```
 
 **制約**:
-- `steering_angle`: -max_steering_angle ~ +max_steering_angle
-- `speed`: 0.0 ~ max_speed
-- `stamp.nanoseconds() > 0` で有効
-- タイムアウト判定: `(current_time - stamp).seconds() > timeout_sec`
+- `steering_angle`: -max_steering_angle ~ +max_steering_angle（MUST）
+- `speed`: 0.0 ~ max_speed（MUST）
+- `stamp.nanoseconds() > 0` で有効（MUST）
+- タイムアウト判定: `(current_time - stamp).seconds() > timeout_sec`（MUST）
 
 **生成者**: ROS2Bridge（`/vehicle/control_cmd` から変換）
 **消費者**: VehicleDynamics
@@ -164,9 +164,9 @@ struct WorldData {
 ```
 
 **制約**:
-- すべてのファイルパスは `bundle_path` からの相対パス
-- 必須ファイルは存在する必要がある
-- `dt > 0.0`
+- すべてのファイルパスは `bundle_path` からの相対パス（MUST）
+- 必須ファイルは存在する必要がある（MUST）
+- `dt > 0.0`（MUST）
 - `static_mesh_glb_path` は任意
 
 **生成者**: WorldLoader
@@ -200,10 +200,10 @@ struct HeightmapData {
 ```
 
 **制約**:
-- `data.size() == width * height`
-- メモリレイアウト: row-major (Y x X)
-- 無効領域: NaN (IEEE 754)
-- データ範囲: min_height ≤ data[i] ≤ max_height (NaN除く)
+- `data.size() == width * height`（MUST）
+- メモリレイアウト: row-major (Y x X)（MUST）
+- 無効領域: NaN (IEEE 754)（MUST）
+- データ範囲: min_height ≤ data[i] ≤ max_height (NaN除く)（MUST）
 
 **ファイルフォーマット**: [`../../docs/interfaces/world_bundle_schema.md#4-1`](../../docs/interfaces/world_bundle_schema.md#4-1) に準拠
 
@@ -228,11 +228,11 @@ struct DrivableArea {
 ```
 
 **制約**:
-- 座標系: map frame の X-Y 平面
-- 外周: 反時計回り (CCW)
-- 穴: 時計回り (CW)
-- `polygons.size() == priorities.size()`
-- 最低1つのポリゴンが必要
+- 座標系: map frame の X-Y 平面（MUST）
+- 外周: 反時計回り (CCW)（MUST）
+- 穴: 時計回り (CW)（MUST）
+- `polygons.size() == priorities.size()`（MUST）
+- 最低1つのポリゴンが必要（MUST）
 
 **ファイルフォーマット**: [`../../docs/interfaces/world_bundle_schema.md#4-3`](../../docs/interfaces/world_bundle_schema.md#4-3) に準拠
 
@@ -291,8 +291,8 @@ struct CameraIntrinsics {
 ```
 
 **制約**:
-- `width > 0 && height > 0`
-- `fx > 0.0 && fy > 0.0`
+- `width > 0 && height > 0`（MUST）
+- `fx > 0.0 && fy > 0.0`（MUST）
 - distortion coefficients は任意
 
 **ファイルフォーマット**: [`../../docs/interfaces/world_bundle_schema.md#5-1`](../../docs/interfaces/world_bundle_schema.md#5-1) に準拠
@@ -315,8 +315,8 @@ struct CameraExtrinsics {
 ```
 
 **制約**:
-- `transform` は有効な剛体変換（回転 + 並進）
-- 座標系: base_link → camera
+- `transform` は有効な剛体変換（回転 + 並進）（MUST）
+- 座標系: base_link → camera（MUST）
 
 **ファイルフォーマット**: [`../../docs/interfaces/world_bundle_schema.md#5-1`](../../docs/interfaces/world_bundle_schema.md#5-1) に準拠
 
@@ -341,9 +341,9 @@ struct RenderedImage {
 ```
 
 **制約**:
-- `data.size() == width * height * 3`
-- RGB8: R, G, B の順で各チャンネル 0-255
-- メモリレイアウト: row-major
+- `data.size() == width * height * 3`（MUST）
+- RGB8: R, G, B の順で各チャンネル 0-255（MUST）
+- メモリレイアウト: row-major（MUST）
 
 **生成者**: CameraRenderer
 **消費者**: ROS2Bridge
@@ -368,10 +368,10 @@ struct LiDARSpec {
 ```
 
 **制約**:
-- `channels > 0`
-- `horizontal_resolution > 0.0`
-- `vertical_fov_min < vertical_fov_max`
-- `min_range < max_range`
+- `channels > 0`（MUST）
+- `horizontal_resolution > 0.0`（MUST）
+- `vertical_fov_min < vertical_fov_max`（MUST）
+- `min_range < max_range`（MUST）
 
 **ファイルフォーマット**: [`../../docs/interfaces/world_bundle_schema.md#5-1`](../../docs/interfaces/world_bundle_schema.md#5-1) に準拠
 
@@ -393,8 +393,8 @@ struct LiDARExtrinsics {
 ```
 
 **制約**:
-- `transform` は有効な剛体変換（回転 + 並進）
-- 座標系: base_link → lidar
+- `transform` は有効な剛体変換（回転 + 並進）（MUST）
+- 座標系: base_link → lidar（MUST）
 
 **ファイルフォーマット**: [`../../docs/interfaces/world_bundle_schema.md#5-1`](../../docs/interfaces/world_bundle_schema.md#5-1) に準拠
 
@@ -417,11 +417,11 @@ struct GeneratedPointCloud {
 ```
 
 **制約**:
-- `points` の各要素: (x, y, z, intensity)
-  - x, y, z: [m], lidar frame
-  - intensity: 0.0 ~ 255.0
-- 座標系: lidar frame (FLU)
-- 点数: 0 ~ 200,000
+- `points` の各要素: (x, y, z, intensity)（MUST）
+  - x, y, z: [m], lidar frame（MUST）
+  - intensity: 0.0 ~ 255.0（MUST）
+- 座標系: lidar frame (FLU)（MUST）
+- 点数: 0 ~ 200,000（MUST）
 
 **生成者**: LiDARGenerator
 **消費者**: ROS2Bridge

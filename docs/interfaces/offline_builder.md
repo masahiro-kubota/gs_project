@@ -1,6 +1,6 @@
 # オフライン処理契約（MCAP → world_bundle）
 
-**バージョン**: 1.0.1
+**バージョン**: 1.0.2
 **最終更新**: 2026-02-15
 
 ## 概要
@@ -37,7 +37,7 @@ world_bundle を生成するオフライン処理パイプラインです。
 場所: 任意のパス（コマンドライン引数で指定）
 ```
 
-**期待される MCAP の内容**:
+**MCAP の必須内容**:
 
 | トピック名（例） | メッセージ型 | 必須/任意 | 説明 |
 |----------------|------------|---------|------|
@@ -51,11 +51,11 @@ world_bundle を生成するオフライン処理パイプラインです。
 | `/camera/*/camera_info` | `sensor_msgs/CameraInfo` | 必須 | カメラ較正情報 |
 
 **データ品質要件**:
-- カメラ: 最低 10Hz、推奨 12Hz 以上
-- LiDAR: 最低 10Hz、推奨 20Hz 以上
-- 記録時間: 最低 30秒、推奨 60秒 以上
-- TF: すべてのセンサから base_link への変換が利用可能
-- 同期: センサ間の時刻同期が取れていること（許容誤差 ±50ms）
+- カメラ: 必須 10Hz 以上（デフォルト推奨値: 12Hz）（MUST）
+- LiDAR: 必須 10Hz 以上（デフォルト推奨値: 20Hz）（MUST）
+- 記録時間: 必須 30秒 以上（デフォルト推奨値: 60秒）（MUST）
+- TF: すべてのセンサから base_link への変換が利用可能（MUST）
+- 同期: センサ間の時刻同期が取れていること（許容誤差: 最大 ±50ms）（MUST）
 
 ---
 
@@ -101,12 +101,12 @@ frames:
   lidars:
     top: "lidar_top"
 
-# 処理範囲（オプション: 全体を使う場合は省略）
+# 処理範囲（Optional: 省略時は全体を使用）
 time_range:
   start_sec: 0.0      # MCAP開始からのオフセット [s]
   duration_sec: 60.0  # 処理する長さ [s]
 
-# 座標系原点（オプション: 緯度経度がある場合）
+# 座標系原点（Optional: 緯度経度がある場合）
 origin:
   latitude: 35.681236
   longitude: 139.767125
@@ -152,11 +152,11 @@ training:
     grad_threshold: 0.0002
 
   # 再現性
-  seed: 42
+  seed: 42  # 必須
 
 optimization:
-  refine_pose: false       # 初期はfalse推奨
-  refine_exposure: false   # 露出補正が必要な場合 true
+  refine_pose: false       # デフォルト値: false
+  refine_exposure: false   # デフォルト値: false（露出補正が必要な場合 true）
 
 output:
   save_iterations: [7000, 15000, 30000]
@@ -184,14 +184,14 @@ heightmap:
     outlier_threshold: 0.5  # [m]
 
 drivable:
-  method: "trajectory_buffer"  # 最初はこれで十分
-  buffer_width: 10.0           # [m] 軌跡の左右バッファ
-  simplify_tolerance: 0.5      # [m] ポリゴン簡略化
+  method: "trajectory_buffer"  # デフォルト値: "trajectory_buffer"
+  buffer_width: 10.0           # [m] 軌跡の左右バッファ（デフォルト値: 10.0）
+  simplify_tolerance: 0.5      # [m] ポリゴン簡略化（デフォルト値: 0.5）
 
 static_mesh:
-  enable: false                # 最初は無効化推奨
-  method: "poisson"            # or "tsdf"
-  voxel_size: 0.05            # [m]
+  enable: false                # デフォルト値: false
+  method: "poisson"            # デフォルト値: "poisson"（"tsdf" もサポート）
+  voxel_size: 0.05            # [m]（デフォルト値: 0.05）
 ```
 
 ---
@@ -217,7 +217,7 @@ static_mesh:
 - `sensors/tf_static.json`
 - `sim/timebase.yaml`
 
-**任意ファイル**:
+**Optional（省略可能）**:
 - `geometry/static_mesh.glb`
 - `preview/*.png`, `preview/*.mp4`
 
@@ -355,11 +355,11 @@ gs-world-builder build \
 **引数詳細**:
 - `--input`: 入力MCAPファイルパス（必須）
 - `--output`: 出力world_bundleディレクトリ（必須）
-- `--config`: パイプライン設定ファイル（デフォルト: `config.yaml`）
-- `--scene-id`: シーンID（デフォルト: 出力ディレクトリ名）
-- `--gs-config`: 3DGS学習設定（デフォルト: `gs_training_config.yaml`）
-- `--geometry-config`: 幾何生成設定（デフォルト: `geometry_config.yaml`）
-- `--workers`: 並列処理数（デフォルト: CPU数）
+- `--config`: パイプライン設定ファイル（デフォルト値: `config.yaml`）
+- `--scene-id`: シーンID（デフォルト値: 出力ディレクトリ名）
+- `--gs-config`: 3DGS学習設定（デフォルト値: `gs_training_config.yaml`）
+- `--geometry-config`: 幾何生成設定（デフォルト値: `geometry_config.yaml`）
+- `--workers`: 並列処理数（デフォルト値: CPU数）
 - `--keep-workspace`: 作業ディレクトリを削除せず保持
 - `--skip-validation`: 検証を省略
 - `--verbose`: 詳細ログ出力
@@ -590,5 +590,6 @@ gs-world-builder rebuild --report workspace/build_report.json
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
+| 1.0.2 | 2026-02-15 | 曖昧な表現を明確化（推奨→デフォルト値、オプション→Optional） |
 | 1.0.1 | 2026-02-15 | スキーマリファレンス修正 |
 | 1.0.0 | 2026-02-14 | 初版作成 |
